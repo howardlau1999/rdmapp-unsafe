@@ -88,19 +88,6 @@ public:
     const enum ibv_wr_opcode opcode_;
 
   public:
-    send_awaitable(qp* qp, void *buffer, size_t length,
-                   enum ibv_wr_opcode opcode);
-    send_awaitable(qp* qp, void *buffer, size_t length,
-                   enum ibv_wr_opcode opcode, remote_mr const &remote_mr);
-    send_awaitable(qp* qp, void *buffer, size_t length,
-                   enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
-                   uint32_t imm);
-    send_awaitable(qp* qp, void *buffer, size_t length,
-                   enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
-                   uint64_t add);
-    send_awaitable(qp* qp, void *buffer, size_t length,
-                   enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
-                   uint64_t compare, uint64_t swap);
     send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode);
     send_awaitable(qp* qp, local_mr* local_mr,
@@ -130,7 +117,6 @@ public:
 
   public:
     recv_awaitable(qp* qp, local_mr* local_mr);
-    recv_awaitable(qp* qp, void *buffer, size_t length);
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> h) noexcept;
     std::pair<uint32_t, std::optional<uint32_t>> await_resume() const;

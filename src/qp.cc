@@ -302,45 +302,6 @@ uint32_t qp::send_awaitable::await_resume() const {
   return wc_.byte_len;
 }
 
-qp::send_awaitable qp::send(void *buffer, size_t length) {
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_SEND);
-}
-
-qp::send_awaitable qp::write(remote_mr const &remote_mr, void *buffer,
-                             size_t length) {
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_RDMA_WRITE, remote_mr);
-}
-
-qp::send_awaitable qp::write_with_imm(remote_mr const &remote_mr, void *buffer,
-                                      size_t length, uint32_t imm) {
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_RDMA_WRITE_WITH_IMM, remote_mr, imm);
-}
-
-qp::send_awaitable qp::read(remote_mr const &remote_mr, void *buffer,
-                            size_t length) {
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_RDMA_READ, remote_mr);
-}
-
-qp::send_awaitable qp::fetch_and_add(remote_mr const &remote_mr, void *buffer,
-                                     size_t length, uint64_t add) {
-  assert(pd_->device_ptr()->is_fetch_and_add_supported());
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_ATOMIC_FETCH_AND_ADD, remote_mr, add);
-}
-
-qp::send_awaitable qp::compare_and_swap(remote_mr const &remote_mr,
-                                        void *buffer, size_t length,
-                                        uint64_t compare, uint64_t swap) {
-  assert(pd_->device_ptr()->is_compare_and_swap_supported());
-  return qp::send_awaitable(this, buffer, length,
-                            IBV_WR_ATOMIC_CMP_AND_SWP, remote_mr, compare,
-                            swap);
-}
-
 qp::send_awaitable qp::send(local_mr* local_mr) {
   return qp::send_awaitable(this, local_mr, IBV_WR_SEND);
 }
@@ -381,11 +342,6 @@ qp::send_awaitable qp::compare_and_swap(remote_mr const &remote_mr,
                             swap);
 }
 
-qp::recv_awaitable::recv_awaitable(qp* qp, void *buffer,
-                                   size_t length)
-    : qp_(qp),
-      local_mr_(new local_mr(qp_->pd_->reg_mr(buffer, length))),
-      wc_() {}
 qp::recv_awaitable::recv_awaitable(qp* qp,
                                    local_mr* local_mr)
     : qp_(qp), local_mr_(local_mr), wc_() {}
@@ -426,10 +382,6 @@ qp::recv_awaitable::await_resume() const {
     return std::make_pair(wc_.byte_len, wc_.imm_data);
   }
   return std::make_pair(wc_.byte_len, std::nullopt);
-}
-
-qp::recv_awaitable qp::recv(void *buffer, size_t length) {
-  return qp::recv_awaitable(this, buffer, length);
 }
 
 qp::recv_awaitable qp::recv(local_mr* local_mr) {
