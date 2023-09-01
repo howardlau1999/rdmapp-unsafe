@@ -13,11 +13,6 @@ endif ()
 string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_LENGTH)
 add_definitions("-DSOURCE_PATH_LENGTH=${SOURCE_PATH_LENGTH}")
 
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  option(RDMAPP_BUILD_EXAMPLES "Build examples" ON)
-else()
-  option(RDMAPP_BUILD_EXAMPLES "Build examples" OFF)
-endif()
 option(RDMAPP_BUILD_DOCS "Build docs" OFF)
 option(RDMAPP_ASAN "Build with AddressSanitizer" OFF)
 
@@ -48,7 +43,6 @@ set(RDMAPP_SOURCE_FILES
   src/cq.cc
   src/qp.cc
   src/srq.cc
-  src/cq_poller.cc
   src/executor.cc
   src/mr.cc
 )
@@ -104,29 +98,6 @@ find_program(iwyu_path NAMES include-what-you-use iwyu)
 if (iwyu_path)
   message("-- Using include-what-you-use ${iwyu_path}")
   set_property(TARGET rdmapp PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-endif ()
-
-if (RDMAPP_BUILD_EXAMPLES)
-  set(RDMAPP_EXAMPLES_LIB_SOURCE_FILES 
-    examples/socket/event_loop.cc
-    examples/socket/channel.cc
-    examples/socket/tcp_connection.cc
-    examples/socket/tcp_listener.cc
-    examples/acceptor.cc
-    examples/connector.cc
-    examples/qp_transmission.cc
-  )
-  add_library(rdmapp_examples STATIC ${RDMAPP_EXAMPLES_LIB_SOURCE_FILES})
-  target_compile_options(rdmapp_examples ${RDMAPP_COMPILE_OPTIONS})
-  target_include_directories(rdmapp_examples PUBLIC examples/include)
-  target_link_libraries(rdmapp_examples PUBLIC rdmapp)
-  target_link_options(rdmapp_examples ${RDMAPP_LINK_OPTIONS})
-  set(RDMAPP_EXAMPLES helloworld send_bw write_bw)
-  foreach (EXAMPLE IN LISTS RDMAPP_EXAMPLES)
-    add_executable(${EXAMPLE} examples/${EXAMPLE}.cc)
-    target_link_libraries(${EXAMPLE} rdmapp_examples)
-    target_compile_options(${EXAMPLE} ${RDMAPP_COMPILE_OPTIONS})
-  endforeach ()
 endif ()
 
 include(GNUInstallDirs)

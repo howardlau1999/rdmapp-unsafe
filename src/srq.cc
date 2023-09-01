@@ -12,7 +12,7 @@
 
 namespace rdmapp {
 
-srq::srq(std::shared_ptr<pd> pd, size_t max_wr) : srq_(nullptr), pd_(pd) {
+srq::srq(pd* pd, size_t max_wr) : srq_(nullptr), pd_(pd) {
   struct ibv_srq_init_attr srq_init_attr;
   srq_init_attr.srq_context = this;
   srq_init_attr.attr.max_sge = 1;

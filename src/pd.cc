@@ -13,18 +13,18 @@
 
 namespace rdmapp {
 
-pd::pd(std::shared_ptr<rdmapp::device> device) : device_(device) {
+pd::pd(rdmapp::device* device) : device_(device) {
   pd_ = ::ibv_alloc_pd(device->ctx_);
   check_ptr(pd_, "failed to alloc pd");
   RDMAPP_LOG_TRACE("alloc pd %p", reinterpret_cast<void *>(pd_));
 }
 
-std::shared_ptr<device> pd::device_ptr() const { return device_; }
+device* pd::device_ptr() const { return device_; }
 
 local_mr pd::reg_mr(void *buffer, size_t length, int flags) {
   auto mr = ::ibv_reg_mr(pd_, buffer, length, flags);
   check_ptr(mr, "failed to reg mr");
-  return rdmapp::local_mr(this->shared_from_this(), mr);
+  return rdmapp::local_mr(this, mr);
 }
 
 pd::~pd() {

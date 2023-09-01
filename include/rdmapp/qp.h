@@ -46,7 +46,7 @@ struct deserialized_qp {
  * @brief This class is an abstraction of an Infiniband Queue Pair.
  *
  */
-class qp : public noncopyable, public std::enable_shared_from_this<qp> {
+class qp : public noncopyable {
   static std::atomic<uint32_t> next_sq_psn;
   struct ibv_qp *qp_;
   struct ibv_srq *raw_srq_;
@@ -54,10 +54,10 @@ class qp : public noncopyable, public std::enable_shared_from_this<qp> {
   void (qp::*post_recv_fn)(struct ibv_recv_wr const &recv_wr,
                            struct ibv_recv_wr *&bad_recv_wr) const;
 
-  std::shared_ptr<pd> pd_;
-  std::shared_ptr<cq> recv_cq_;
-  std::shared_ptr<cq> send_cq_;
-  std::shared_ptr<srq> srq_;
+  pd* pd_;
+  cq* recv_cq_;
+  cq* send_cq_;
+  srq* srq_;
   std::vector<uint8_t> user_data_;
 
   /**
@@ -77,8 +77,8 @@ class qp : public noncopyable, public std::enable_shared_from_this<qp> {
 
 public:
   class send_awaitable {
-    std::shared_ptr<qp> qp_;
-    std::shared_ptr<local_mr> local_mr_;
+    qp* qp_;
+    local_mr* local_mr_;
     std::exception_ptr exception_;
     remote_mr remote_mr_;
     uint64_t compare_add_;
@@ -88,30 +88,30 @@ public:
     const enum ibv_wr_opcode opcode_;
 
   public:
-    send_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length,
+    send_awaitable(qp* qp, void *buffer, size_t length,
                    enum ibv_wr_opcode opcode);
-    send_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length,
+    send_awaitable(qp* qp, void *buffer, size_t length,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr);
-    send_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length,
+    send_awaitable(qp* qp, void *buffer, size_t length,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint32_t imm);
-    send_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length,
+    send_awaitable(qp* qp, void *buffer, size_t length,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint64_t add);
-    send_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length,
+    send_awaitable(qp* qp, void *buffer, size_t length,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint64_t compare, uint64_t swap);
-    send_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr,
+    send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode);
-    send_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr,
+    send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr);
-    send_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr,
+    send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint32_t imm);
-    send_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr,
+    send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint64_t add);
-    send_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr,
+    send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint64_t compare, uint64_t swap);
     bool await_ready() const noexcept;
@@ -122,15 +122,15 @@ public:
   };
 
   class recv_awaitable {
-    std::shared_ptr<qp> qp_;
-    std::shared_ptr<local_mr> local_mr_;
+    qp* qp_;
+    local_mr* local_mr_;
     std::exception_ptr exception_;
     struct ibv_wc wc_;
     enum ibv_wr_opcode opcode_;
 
   public:
-    recv_awaitable(std::shared_ptr<qp> qp, std::shared_ptr<local_mr> local_mr);
-    recv_awaitable(std::shared_ptr<qp> qp, void *buffer, size_t length);
+    recv_awaitable(qp* qp, local_mr* local_mr);
+    recv_awaitable(qp* qp, void *buffer, size_t length);
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> h) noexcept;
     std::pair<uint32_t, std::optional<uint32_t>> await_resume() const;
@@ -150,8 +150,8 @@ public:
    * SRQ.
    */
   qp(const uint16_t remote_lid, const uint32_t remote_qpn,
-     const uint32_t remote_psn, std::shared_ptr<pd> pd, std::shared_ptr<cq> cq,
-     std::shared_ptr<srq> srq = nullptr);
+     const uint32_t remote_psn, pd* pd, cq* cq,
+     srq* srq = nullptr);
 
   /**
    * @brief Construct a new qp object. The Queue Pair will be created with the
@@ -168,9 +168,9 @@ public:
    * SRQ.
    */
   qp(const uint16_t remote_lid, const uint32_t remote_qpn,
-     const uint32_t remote_psn, std::shared_ptr<pd> pd,
-     std::shared_ptr<cq> recv_cq, std::shared_ptr<cq> send_cq,
-     std::shared_ptr<srq> srq = nullptr);
+     const uint32_t remote_psn, pd* pd,
+     cq* recv_cq, cq* send_cq,
+     srq* srq = nullptr);
 
   /**
    * @brief Construct a new qp object. The constructed Queue Pair will be in
@@ -181,8 +181,8 @@ public:
    * @param srq (Optional) If set, all recv work requests will be posted to this
    * SRQ.
    */
-  qp(std::shared_ptr<pd> pd, std::shared_ptr<cq> cq,
-     std::shared_ptr<srq> srq = nullptr);
+  qp(pd* pd, cq* cq,
+     srq* srq = nullptr);
 
   /**
    * @brief Construct a new qp object. The constructed Queue Pair will be in
@@ -194,8 +194,8 @@ public:
    * @param srq (Optional) If set, all recv work requests will be posted to this
    * SRQ.
    */
-  qp(std::shared_ptr<pd> pd, std::shared_ptr<cq> recv_cq,
-     std::shared_ptr<cq> send_cq, std::shared_ptr<srq> srq = nullptr);
+  qp(pd* pd, cq* recv_cq,
+     cq* send_cq, srq* srq = nullptr);
 
   /**
    * @brief This function is used to post a send work request to the Queue Pair.
@@ -321,7 +321,7 @@ public:
    * controlled by a smart pointer.
    * @return send_awaitable A coroutine returning length of the data sent.
    */
-  [[nodiscard]] send_awaitable send(std::shared_ptr<local_mr> local_mr);
+  [[nodiscard]] send_awaitable send(local_mr* local_mr);
 
   /**
    * @brief This function writes a registered local memory region to remote.
@@ -332,7 +332,7 @@ public:
    * @return send_awaitable A coroutine returning length of the data written.
    */
   [[nodiscard]] send_awaitable write(remote_mr const &remote_mr,
-                                     std::shared_ptr<local_mr> local_mr);
+                                     local_mr* local_mr);
 
   /**
    * @brief This function writes a registered local memory region to remote with
@@ -345,7 +345,7 @@ public:
    * @return send_awaitable A coroutine returning length of the data sent.
    */
   [[nodiscard]] send_awaitable
-  write_with_imm(remote_mr const &remote_mr, std::shared_ptr<local_mr> local_mr,
+  write_with_imm(remote_mr const &remote_mr, local_mr* local_mr,
                  uint32_t imm);
 
   /**
@@ -357,7 +357,7 @@ public:
    * @return send_awaitable A coroutine returning length of the data read.
    */
   [[nodiscard]] send_awaitable read(remote_mr const &remote_mr,
-                                    std::shared_ptr<local_mr> local_mr);
+                                    local_mr* local_mr);
 
   /**
    * @brief This function performs an atomic fetch-and-add operation on the
@@ -370,7 +370,7 @@ public:
    * @return send_awaitable A coroutine returning length of the data sent.
    */
   [[nodiscard]] send_awaitable fetch_and_add(remote_mr const &remote_mr,
-                                             std::shared_ptr<local_mr> local_mr,
+                                             local_mr* local_mr,
                                              uint64_t add);
 
   /**
@@ -386,7 +386,7 @@ public:
    */
   [[nodiscard]] send_awaitable
   compare_and_swap(remote_mr const &remote_mr,
-                   std::shared_ptr<local_mr> local_mr, uint64_t compare,
+                   local_mr* local_mr, uint64_t compare,
                    uint64_t swap);
 
   /**
@@ -399,7 +399,7 @@ public:
    * std::optional<uint32_t>>, with first indicating the length of received
    * data, and second indicating the immediate value if any.
    */
-  [[nodiscard]] recv_awaitable recv(std::shared_ptr<local_mr> local_mr);
+  [[nodiscard]] recv_awaitable recv(local_mr* local_mr);
 
   /**
    * @brief This function serializes a Queue Pair prepared to be sent to a
@@ -421,9 +421,9 @@ public:
    * @brief This function provides access to the Protection Domain of the Queue
    * Pair.
    *
-   * @return std::shared_ptr<pd> Pointer to the PD.
+   * @return pd* Pointer to the PD.
    */
-  std::shared_ptr<pd> pd_ptr() const;
+  pd* pd_ptr() const;
   ~qp();
 
   /**

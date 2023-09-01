@@ -17,8 +17,8 @@ class qp;
  * @brief This class is an abstraction of a Protection Domain.
  *
  */
-class pd : public noncopyable, public std::enable_shared_from_this<pd> {
-  std::shared_ptr<device> device_;
+class pd : public noncopyable {
+  device* device_;
   struct ibv_pd *pd_;
   friend class qp;
   friend class srq;
@@ -29,14 +29,14 @@ public:
    *
    * @param device The device to use.
    */
-  pd(std::shared_ptr<device> device);
+  pd(device* device);
 
   /**
    * @brief Get the device object pointer.
    *
    * @return std::shared_ptr<device> The device object pointer.
    */
-  std::shared_ptr<device> device_ptr() const;
+  device* device_ptr() const;
 
   /**
    * @brief Register a local memory region.
