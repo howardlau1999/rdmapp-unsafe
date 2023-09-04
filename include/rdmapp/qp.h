@@ -205,15 +205,6 @@ public:
   void post_recv(struct ibv_recv_wr const &recv_wr,
                  struct ibv_recv_wr *&bad_recv_wr) const;
 
-  /**
-   * @brief This method sends local buffer to remote. The address will be
-   * registered as a memory region first and then deregistered upon completion.
-   *
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @return send_awaitable A coroutine returning length of the data sent.
-   */
-  [[nodiscard]] send_awaitable send(void *buffer, size_t length);
 
   /**
    * @brief This method writes local buffer to a remote memory region. The local
@@ -228,77 +219,6 @@ public:
   [[nodiscard]] send_awaitable write(remote_mr const &remote_mr, void *buffer,
                                      size_t length);
 
-  /**
-   * @brief This method writes local buffer to a remote memory region with an
-   * immediate value. The local buffer will be registered as a memory region
-   * first and then deregistered upon completion.
-   *
-   * @param remote_mr Remote memory region handle.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @param imm The immediate value.
-   * @return send_awaitable A coroutine returning length of the data written.
-   */
-  [[nodiscard]] send_awaitable write_with_imm(remote_mr const &remote_mr,
-                                              void *buffer, size_t length,
-                                              uint32_t imm);
-
-  /**
-   * @brief This method reads to local buffer from a remote memory region. The
-   * local buffer will be registered as a memory region first and then
-   * deregistered upon completion.
-   *
-   * @param remote_mr Remote memory region handle.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @return send_awaitable A coroutine returning length of the data read.
-   */
-  [[nodiscard]] send_awaitable read(remote_mr const &remote_mr, void *buffer,
-                                    size_t length);
-
-  /**
-   * @brief This method performs an atomic fetch-and-add operation on the
-   * given remote memory region. The local buffer will be registered as a memory
-   * region first and then deregistered upon completion.
-   *
-   * @param remote_mr Remote memory region handle.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @param add The delta.
-   * @return send_awaitable A coroutine returning length of the data sent.
-   */
-  [[nodiscard]] send_awaitable fetch_and_add(remote_mr const &remote_mr,
-                                             void *buffer, size_t length,
-                                             uint64_t add);
-
-  /**
-   * @brief This method performs an atomic compare-and-swap operation on the
-   * given remote memory region. The local buffer will be registered as a memory
-   * region first and then deregistered upon completion.
-   *
-   * @param remote_mr Remote memory region handle.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @param compare The expected old value.
-   * @param swap The desired new value.
-   * @return send_awaitable A coroutine returning length of the data sent.
-   */
-  [[nodiscard]] send_awaitable compare_and_swap(remote_mr const &remote_mr,
-                                                void *buffer, size_t length,
-                                                uint64_t compare,
-                                                uint64_t swap);
-
-  /**
-   * @brief This method posts a recv request on the queue pair. The buffer will
-   * be filled with data received. The local buffer will be registered as a
-   * memory region first and then deregistered upon completion.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @return recv_awaitable A coroutine returning std::pair<uint32_t,
-   * std::optional<uint32_t>>, with first indicating the length of received
-   * data, and second indicating the immediate value if any.
-   */
-  [[nodiscard]] recv_awaitable recv(void *buffer, size_t length);
 
   /**
    * @brief This function sends a registered local memory region to remote.
