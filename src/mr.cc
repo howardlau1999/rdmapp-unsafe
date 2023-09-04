@@ -11,7 +11,7 @@
 
 namespace rdmapp {
 
-local_mr::mr(pd* pd, struct ibv_mr *mr) : mr_(mr), pd_(pd) {}
+local_mr::mr(pd *pd, struct ibv_mr *mr) : mr_(mr), pd_(pd) {}
 
 local_mr::mr(local_mr &&other)
     : mr_(std::exchange(other.mr_, nullptr)), pd_(std::move(other.pd_)) {}
@@ -55,13 +55,39 @@ uint32_t local_mr::rkey() const { return mr_->rkey; }
 
 uint32_t local_mr::lkey() const { return mr_->lkey; }
 
+local_mr_view::mr_view(mr<tags::mr::local> const &mr, size_t offset,
+                       size_t length) {
+  addr_ = reinterpret_cast<uint8_t *>(mr.addr()) + offset;
+  length_ = length;
+  lkey_ = mr.lkey();
+}
+
+void *local_mr_view::addr() const { return addr_; }
+
+size_t local_mr_view::length() const { return length_; }
+
+uint32_t local_mr_view::lkey() const { return lkey_; }
+
 remote_mr::mr(void *addr, uint32_t length, uint32_t rkey)
     : addr_(addr), length_(length), rkey_(rkey) {}
 
-void *remote_mr::addr() { return addr_; }
+void *remote_mr::addr() const { return addr_; }
 
-uint32_t remote_mr::length() { return length_; }
+uint32_t remote_mr::length() const { return length_; }
 
-uint32_t remote_mr::rkey() { return rkey_; }
+uint32_t remote_mr::rkey() const { return rkey_; }
+
+remote_mr_view::mr_view(mr<tags::mr::remote> const &mr, size_t offset,
+                        uint32_t length) {
+  addr_ = reinterpret_cast<uint8_t *>(mr.addr()) + offset;
+  length_ = length;
+  rkey_ = mr.rkey();
+}
+
+void *remote_mr_view::addr() const { return addr_; }
+
+uint32_t remote_mr_view::length() const { return length_; }
+
+uint32_t remote_mr_view::rkey() const { return rkey_; }
 
 } // namespace rdmapp

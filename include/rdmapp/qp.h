@@ -78,9 +78,9 @@ class qp : public noncopyable {
 public:
   class send_awaitable {
     qp* qp_;
-    local_mr* local_mr_;
+    local_mr_view local_mr_;
     std::exception_ptr exception_;
-    remote_mr remote_mr_;
+    remote_mr_view remote_mr_;
     uint64_t compare_add_;
     uint64_t swap_;
     uint32_t imm_;
@@ -101,6 +101,19 @@ public:
     send_awaitable(qp* qp, local_mr* local_mr,
                    enum ibv_wr_opcode opcode, remote_mr const &remote_mr,
                    uint64_t compare, uint64_t swap);
+    send_awaitable(qp* qp, local_mr_view local_mr,
+                   enum ibv_wr_opcode opcode);
+    send_awaitable(qp* qp, local_mr_view local_mr,
+                   enum ibv_wr_opcode opcode, remote_mr_view remote_mr);
+    send_awaitable(qp* qp, local_mr_view local_mr,
+                   enum ibv_wr_opcode opcode, remote_mr_view remote_mr,
+                   uint32_t imm);
+    send_awaitable(qp* qp, local_mr_view local_mr,
+                   enum ibv_wr_opcode opcode, remote_mr_view remote_mr,
+                   uint64_t add);
+    send_awaitable(qp* qp, local_mr_view local_mr,
+                   enum ibv_wr_opcode opcode, remote_mr_view remote_mr,
+                   uint64_t compare, uint64_t swap);
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> h) noexcept;
     uint32_t await_resume() const;
@@ -110,13 +123,14 @@ public:
 
   class recv_awaitable {
     qp* qp_;
-    local_mr* local_mr_;
+    local_mr_view local_mr_;
     std::exception_ptr exception_;
     struct ibv_wc wc_;
     enum ibv_wr_opcode opcode_;
 
   public:
     recv_awaitable(qp* qp, local_mr* local_mr);
+    recv_awaitable(qp* qp, local_mr_view local_mr);
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> h) noexcept;
     std::pair<uint32_t, std::optional<uint32_t>> await_resume() const;
@@ -207,20 +221,6 @@ public:
 
 
   /**
-   * @brief This method writes local buffer to a remote memory region. The local
-   * buffer will be registered as a memory region first and then deregistered
-   * upon completion.
-   *
-   * @param remote_mr Remote memory region handle.
-   * @param buffer Pointer to local buffer. It should be valid until completion.
-   * @param length The length of the local buffer.
-   * @return send_awaitable A coroutine returning length of the data written.
-   */
-  [[nodiscard]] send_awaitable write(remote_mr const &remote_mr, void *buffer,
-                                     size_t length);
-
-
-  /**
    * @brief This function sends a registered local memory region to remote.
    *
    * @param local_mr Registered local memory region, whose lifetime is
@@ -265,6 +265,9 @@ public:
   [[nodiscard]] send_awaitable read(remote_mr const &remote_mr,
                                     local_mr* local_mr);
 
+  [[nodiscard]] send_awaitable read(remote_mr_view remote_mr,
+                                    local_mr_view local_mr);
+
   /**
    * @brief This function performs an atomic fetch-and-add operation on the
    * given remote memory region.
@@ -277,6 +280,10 @@ public:
    */
   [[nodiscard]] send_awaitable fetch_and_add(remote_mr const &remote_mr,
                                              local_mr* local_mr,
+                                             uint64_t add);
+  
+  [[nodiscard]] send_awaitable fetch_and_add(remote_mr_view remote_mr,
+                                             local_mr_view local_mr,
                                              uint64_t add);
 
   /**
@@ -293,6 +300,11 @@ public:
   [[nodiscard]] send_awaitable
   compare_and_swap(remote_mr const &remote_mr,
                    local_mr* local_mr, uint64_t compare,
+                   uint64_t swap);
+  
+  [[nodiscard]] send_awaitable
+  compare_and_swap(remote_mr_view remote_mr,
+                   local_mr_view local_mr, uint64_t compare,
                    uint64_t swap);
 
   /**

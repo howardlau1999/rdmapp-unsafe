@@ -33,7 +33,7 @@ template <class Tag> class mr;
  */
 template <> class mr<tags::mr::local> : public noncopyable {
   struct ibv_mr *mr_;
-  pd* pd_;
+  pd *pd_;
 
 public:
   /**
@@ -42,7 +42,7 @@ public:
    * @param pd The protection domain to use.
    * @param mr The ibverbs memory region handle.
    */
-  mr(pd* pd, struct ibv_mr *mr);
+  mr(pd *pd, struct ibv_mr *mr);
 
   /**
    * @brief Move construct a new mr object
@@ -141,21 +141,21 @@ public:
    *
    * @return void* The address of the remote memory region.
    */
-  void *addr();
+  void *addr() const;
 
   /**
    * @brief Get the length of the remote memory region.
    *
    * @return uint32_t The length of the remote memory region.
    */
-  uint32_t length();
+  uint32_t length() const;
 
   /**
    * @brief Get the remote key of the memory region.
    *
    * @return uint32_t The remote key of the memory region.
    */
-  uint32_t rkey();
+  uint32_t rkey() const;
 
   /**
    * @brief Deserialize a remote memory region handle.
@@ -173,7 +173,42 @@ public:
   }
 };
 
+/**
+ * @brief Represents a view into a memory region.
+ *
+ * @tparam Tag
+ */
+template <class Tag> class mr_view;
+
+template <> class mr_view<tags::mr::local> {
+  void *addr_;
+  size_t length_;
+  uint32_t lkey_;
+
+public:
+  mr_view(mr<tags::mr::local> const &mr, size_t offset, size_t length);
+  void *addr() const;
+  size_t length() const;
+  uint32_t lkey() const;
+};
+
+template <> class mr_view<tags::mr::remote> {
+  void *addr_;
+  uint32_t length_;
+  uint32_t rkey_;
+
+public:
+  mr_view() = default;
+  mr_view(mr<tags::mr::remote> const &mr, size_t offset, uint32_t length);
+  void *addr() const;
+  uint32_t length() const;
+  uint32_t rkey() const;
+};
+
 using local_mr = mr<tags::mr::local>;
 using remote_mr = mr<tags::mr::remote>;
+
+using local_mr_view = mr_view<tags::mr::local>;
+using remote_mr_view = mr_view<tags::mr::remote>;
 
 } // namespace rdmapp
